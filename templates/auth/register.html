@@ -4,39 +4,47 @@
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-5">
-        <div class="card shadow-sm">
-            <div class="card-body p-4">
-                <h2 class="card-title text-center mb-4">Создать аккаунт</h2>
+    <div class="col-sm-10 col-md-7 col-lg-5">
+        <div class="text-center mb-4">
+            <div class="bg-success text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3"
+                 style="width:64px;height:64px;font-size:1.8rem;">
+                <i class="bi bi-person-plus"></i>
+            </div>
+            <h1 class="h3 fw-bold">Создать аккаунт</h1>
+            <p class="text-muted">Начните вести учёт финансов прямо сейчас</p>
+        </div>
 
-                <form method="post">
+        <div class="card shadow-sm border-0 rounded-3">
+            <div class="card-body p-4">
+                <form method="post" novalidate>
                     {% csrf_token %}
                     {% for field in form %}
-                        <div class="mb-3">
-                            <label class="form-label">{{ field.label }}</label>
-                            <input
-                                type="{{ field.field.widget.input_type }}"
-                                name="{{ field.html_name }}"
-                                class="form-control {% if field.errors %}is-invalid{% endif %}"
-                                {% if field.value %}value="{{ field.value }}"{% endif %}
-                            >
-                            {% if field.help_text %}
-                                <div class="form-text text-muted">{{ field.help_text }}</div>
-                            {% endif %}
-                            {% for error in field.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
-                        </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">{{ field.label }}</label>
+                        <input
+                            type="{{ field.field.widget.input_type }}"
+                            name="{{ field.html_name }}"
+                            class="form-control {% if field.errors %}is-invalid{% endif %}"
+                            {% if field.value %}value="{{ field.value }}"{% endif %}
+                        >
+                        {% if field.help_text %}
+                            <div class="form-text text-muted small">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="invalid-feedback">{{ error }}</div>
+                        {% endfor %}
+                    </div>
                     {% endfor %}
-                    <button type="submit" class="btn btn-success w-100">Зарегистрироваться</button>
+                    <button type="submit" class="btn btn-success w-100 py-2 mt-1">
+                        <i class="bi bi-person-check me-1"></i> Зарегистрироваться
+                    </button>
                 </form>
-
-                <hr>
-                <p class="text-center mb-0">
-                    Уже есть аккаунт? <a href="{% url 'login' %}">Войти</a>
-                </p>
             </div>
         </div>
+
+        <p class="text-center mt-3 text-muted small">
+            Уже есть аккаунт? <a href="{% url 'login' %}" class="fw-semibold">Войти</a>
+        </p>
     </div>
 </div>
 {% endblock %}
