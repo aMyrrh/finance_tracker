@@ -1,8 +1,12 @@
+import json
+from datetime import date
+
 from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
+from django.db.models.functions import TruncMonth
 from django.shortcuts import redirect, render
 from django.urls import reverse_lazy
 from django.utils import timezone
@@ -63,6 +67,48 @@ class DashboardView(LoginRequiredMixin, View):
 
         accounts = Account.objects.filter(owner=user)
 
+        # --- Данные для pie-графика: расходы по категориям за текущий месяц ---
+        pie_data_qs = (
+            month_qs.filter(type='expense', category__isnull=False)
+            .values('category__name', 'category__color')
+            .annotate(total=Sum('amount'))
+            .order_by('-total')
+        )
+        pie_labels = [r['category__name'] for r in pie_data_qs]
+        pie_values = [float(r['total']) for r in pie_data_qs]
+        pie_colors = [r['category__color'] for r in pie_data_qs]
+
+        # --- Данные для bar-графика: доходы и расходы по последним 6 месяцам ---
+        # TruncMonth группирует транзакции по месяцу
+        six_months_ago = date(now.year, now.month, 1)
+        # вычтем 5 месяцев вручную, чтобы не тащить dateutil
+        month_num = now.month - 5
+        year_num = now.year
+        if month_num <= 0:
+            month_num += 12
+            year_num -= 1
+        six_months_ago = date(year_num, month_num, 1)
+
+        bar_qs = (
+            Transaction.objects
+            .filter(owner=user, date__gte=six_months_ago)
+            .annotate(month=TruncMonth('date'))
+            .values('month', 'type')
+            .annotate(total=Sum('amount'))
+            .order_by('month')
+        )
+
+        # Собираем словарь {month_label: {income: x, expense: y}}
+        bar_map: dict = {}
+        for row in bar_qs:
+            label = row['month'].strftime('%b %Y')
+            bar_map.setdefault(label, {'income': 0, 'expense': 0})
+            bar_map[label][row['type']] += float(row['total'])
+
+        bar_labels = list(bar_map.keys())
+        bar_income = [bar_map[l]['income'] for l in bar_labels]
+        bar_expense = [bar_map[l]['expense'] for l in bar_labels]
+
         ctx = {
             'total_balance': total_balance,
             'month_income': month_income,
@@ -71,6 +117,13 @@ class DashboardView(LoginRequiredMixin, View):
             'last_transactions': last_transactions,
             'accounts': accounts,
             'current_month': now.strftime('%B %Y'),
+            # json.dumps — передаём данные в шаблон как JSON-строки для Chart.js
+            'pie_labels': json.dumps(pie_labels, ensure_ascii=False),
+            'pie_values': json.dumps(pie_values),
+            'pie_colors': json.dumps(pie_colors),
+            'bar_labels': json.dumps(bar_labels, ensure_ascii=False),
+            'bar_income': json.dumps(bar_income),
+            'bar_expense': json.dumps(bar_expense),
         }
         return render(request, 'dashboard.html', ctx)
 
