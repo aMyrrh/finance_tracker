@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+
+{% block title %}Дашборд{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Добро пожаловать, {{ user.username }}!</h2>
+    <a href="{% url 'transaction-create' %}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Добавить транзакцию
+    </a>
+</div>
+
+{# Сводные карточки #}
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body">
+                <div class="text-muted small mb-1"><i class="bi bi-wallet2"></i> Общий баланс</div>
+                <div class="fs-3 fw-bold {% if total_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {{ total_balance }} ₽
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body">
+                <div class="text-muted small mb-1"><i class="bi bi-arrow-up-circle"></i> Доходы за {{ current_month }}</div>
+                <div class="fs-3 fw-bold text-success">+{{ month_income }} ₽</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body">
+                <div class="text-muted small mb-1"><i class="bi bi-arrow-down-circle"></i> Расходы за {{ current_month }}</div>
+                <div class="fs-3 fw-bold text-danger">−{{ month_expense }} ₽</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card shadow-sm h-100 border-0">
+            <div class="card-body">
+                <div class="text-muted small mb-1"><i class="bi bi-graph-up"></i> Итог за месяц</div>
+                <div class="fs-3 fw-bold {% if month_net >= 0 %}text-success{% else %}text-danger{% endif %}">
+                    {% if month_net >= 0 %}+{% endif %}{{ month_net }} ₽
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    {# Последние транзакции #}
+    <div class="col-lg-8">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Последние транзакции</strong>
+                <a href="{% url 'transaction-list' %}" class="btn btn-sm btn-outline-secondary">Все</a>
+            </div>
+            {% if last_transactions %}
+            <div class="list-group list-group-flush">
+                {% for t in last_transactions %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <div>
+                        <div class="fw-semibold">
+                            {% if t.category %}
+                                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ t.category.color }};margin-right:6px;"></span>
+                                {{ t.category.name }}
+                            {% else %}
+                                <span class="text-muted">Без категории</span>
+                            {% endif %}
+                        </div>
+                        <div class="text-muted small">{{ t.date|date:"d.m.Y" }} · {{ t.account.name }}</div>
+                        {% if t.description %}
+                            <div class="text-muted small">{{ t.description|truncatechars:60 }}</div>
+                        {% endif %}
+                    </div>
+                    <span class="fw-bold {% if t.type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                        {% if t.type == 'income' %}+{% else %}−{% endif %}{{ t.amount }} ₽
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card-body text-center text-muted py-4">
+                <i class="bi bi-receipt fs-2"></i>
+                <p class="mt-2">Транзакций пока нет. <a href="{% url 'transaction-create' %}">Добавить первую</a></p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    {# Счета #}
+    <div class="col-lg-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                <strong>Счета</strong>
+                <a href="{% url 'account-list' %}" class="btn btn-sm btn-outline-secondary">Все</a>
+            </div>
+            {% if accounts %}
+            <div class="list-group list-group-flush">
+                {% for acc in accounts %}
+                <div class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>{{ acc.name }}</span>
+                    <span class="fw-bold {% if acc.balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                        {{ acc.balance }} {{ acc.currency }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card-body text-center text-muted py-4">
+                <i class="bi bi-bank fs-2"></i>
+                <p class="mt-2"><a href="{% url 'account-create' %}">Добавить счёт</a></p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
