@@ -8,16 +8,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         body { min-height: 100vh; display: flex; flex-direction: column; }
-        main { flex: 1; }
 
         .navbar-brand { font-size: 1.1rem; letter-spacing: .02em; }
 
-        /* Sidebar */
         #sidebar {
             min-width: 220px; max-width: 220px;
             background: #1a1f36;
             min-height: calc(100vh - 56px);
-            transition: all .2s;
         }
         #sidebar .nav-link {
             color: rgba(255,255,255,.65);
@@ -39,27 +36,15 @@
 
         .content-area { flex: 1; padding: 1.5rem; background: #f8f9fa; }
 
-        /* Карточки-метрики */
-        .metric-card { border: none; border-radius: .75rem; }
-        .metric-card .metric-value { font-size: 1.6rem; font-weight: 700; }
-        .metric-card .metric-label { font-size: .78rem; color: #6c757d; }
-
-        /* Таблицы */
         .table th { font-size: .8rem; text-transform: uppercase;
                     letter-spacing: .05em; color: #6c757d; }
 
-        /* Flash-сообщения */
-        .alert { border-radius: .5rem; }
-
-        /* Footer */
         footer { font-size: .8rem; color: #adb5bd; }
     </style>
 </head>
-<body>
+<body class="bg-light">
 
 {% if user.is_authenticated %}
-
-{# Верхняя навигационная панель #}
 <nav class="navbar navbar-dark bg-primary px-3" style="height:56px;">
     <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">
         <i class="bi bi-wallet2 me-1"></i>Мои финансы
@@ -76,17 +61,12 @@
         </form>
     </div>
 </nav>
-
-{# Основной макет: sidebar + контент #}
-<div class="d-flex">
-
-    {# Боковое меню #}
+<div class="d-flex" style="flex:1;">
     <nav id="sidebar" class="d-none d-md-flex flex-column p-2">
         <div class="sidebar-heading">Обзор</div>
         <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
             <i class="bi bi-grid"></i> Дашборд
         </a>
-
         <div class="sidebar-heading">Учёт</div>
         <a href="{% url 'transaction-list' %}" class="nav-link {% if 'transaction' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-receipt"></i> Транзакции
@@ -97,7 +77,6 @@
         <a href="{% url 'transaction-import' %}" class="nav-link">
             <i class="bi bi-upload"></i> Импорт CSV
         </a>
-
         <div class="sidebar-heading">Справочники</div>
         <a href="{% url 'account-list' %}" class="nav-link {% if 'account' in request.resolver_match.url_name %}active{% endif %}">
             <i class="bi bi-bank"></i> Счета
@@ -106,41 +85,32 @@
             <i class="bi bi-tags"></i> Категории
         </a>
     </nav>
-
-    {# Рабочая область #}
     <div class="content-area w-100">
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                    {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-        {% endif %}
-
-        {% block content %}{% endblock %}
-    </div>
-</div>
-
-{% else %}
-
-{# Для страниц входа/регистрации — без sidebar #}
-<main class="container mt-5">
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-    {% block content %}{% endblock %}
-</main>
-
 {% endif %}
 
-<footer class="text-center py-3 mt-auto border-top">
-    Мои финансы &copy; {{ "now"|date:"Y" }} &mdash; курсовая работа
+{# Единственный блок content — Django запрещает дублировать имена блоков,
+   поэтому обёртки (sidebar/container) открываются/закрываются условно,
+   а сам блок стоит ровно один раз. #}
+{% if messages %}
+    <div class="mb-3">
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    {% endfor %}
+    </div>
+{% endif %}
+
+{% block content %}{% endblock %}
+
+{% if user.is_authenticated %}
+    </div>
+</div>
+{% endif %}
+
+<footer class="text-center py-3 border-top mt-auto">
+    <span class="text-muted">Мои финансы &copy; {% now "Y" %} — курсовая работа</span>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
