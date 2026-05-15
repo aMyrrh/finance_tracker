@@ -1,8 +1,13 @@
 {
   "permissions": {
     "allow": [
-      "PowerShell(pip *)",
-      "PowerShell(Get-Command *)"
+      "Bash(*)",
+      "PowerShell(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)"
     ]
   }
 }

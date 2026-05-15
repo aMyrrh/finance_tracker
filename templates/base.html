@@ -8,9 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
         body { min-height: 100vh; display: flex; flex-direction: column; }
-
         .navbar-brand { font-size: 1.1rem; letter-spacing: .02em; }
-
         #sidebar {
             min-width: 220px; max-width: 220px;
             background: #1a1f36;
@@ -33,18 +31,16 @@
             text-transform: uppercase; color: rgba(255,255,255,.35);
             padding: 1rem .75rem .25rem;
         }
-
         .content-area { flex: 1; padding: 1.5rem; background: #f8f9fa; }
-
         .table th { font-size: .8rem; text-transform: uppercase;
                     letter-spacing: .05em; color: #6c757d; }
-
         footer { font-size: .8rem; color: #adb5bd; }
     </style>
 </head>
 <body class="bg-light">
 
 {% if user.is_authenticated %}
+{% with url_name=request.resolver_match.url_name %}
 <nav class="navbar navbar-dark bg-primary px-3" style="height:56px;">
     <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">
         <i class="bi bi-wallet2 me-1"></i>Мои финансы
@@ -64,33 +60,39 @@
 <div class="d-flex" style="flex:1;">
     <nav id="sidebar" class="d-none d-md-flex flex-column p-2">
         <div class="sidebar-heading">Обзор</div>
-        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+        <a href="{% url 'dashboard' %}"
+           class="nav-link {% if url_name == 'dashboard' %}active{% endif %}">
             <i class="bi bi-grid"></i> Дашборд
         </a>
+
         <div class="sidebar-heading">Учёт</div>
-        <a href="{% url 'transaction-list' %}" class="nav-link {% if 'transaction' in request.resolver_match.url_name %}active{% endif %}">
+        <a href="{% url 'transaction-list' %}"
+           class="nav-link {% if url_name == 'transaction-list' or url_name == 'transaction-edit' or url_name == 'transaction-delete' %}active{% endif %}">
             <i class="bi bi-receipt"></i> Транзакции
         </a>
-        <a href="{% url 'transaction-create' %}" class="nav-link">
+        <a href="{% url 'transaction-create' %}"
+           class="nav-link {% if url_name == 'transaction-create' %}active{% endif %}">
             <i class="bi bi-plus-circle"></i> Добавить
         </a>
-        <a href="{% url 'transaction-import' %}" class="nav-link">
+        <a href="{% url 'transaction-import' %}"
+           class="nav-link {% if url_name == 'transaction-import' %}active{% endif %}">
             <i class="bi bi-upload"></i> Импорт CSV
         </a>
+
         <div class="sidebar-heading">Справочники</div>
-        <a href="{% url 'account-list' %}" class="nav-link {% if 'account' in request.resolver_match.url_name %}active{% endif %}">
+        <a href="{% url 'account-list' %}"
+           class="nav-link {% if 'account' in url_name %}active{% endif %}">
             <i class="bi bi-bank"></i> Счета
         </a>
-        <a href="{% url 'category-list' %}" class="nav-link {% if 'category' in request.resolver_match.url_name %}active{% endif %}">
+        <a href="{% url 'category-list' %}"
+           class="nav-link {% if 'category' in url_name %}active{% endif %}">
             <i class="bi bi-tags"></i> Категории
         </a>
     </nav>
     <div class="content-area w-100">
+{% endwith %}
 {% endif %}
 
-{# Единственный блок content — Django запрещает дублировать имена блоков,
-   поэтому обёртки (sidebar/container) открываются/закрываются условно,
-   а сам блок стоит ровно один раз. #}
 {% if messages %}
     <div class="mb-3">
     {% for message in messages %}
