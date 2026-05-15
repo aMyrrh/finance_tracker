@@ -30,6 +30,7 @@ urlpatterns = [
     # Transactions
     path('transactions/', views.TransactionListView.as_view(), name='transaction-list'),
     path('transactions/create/', views.TransactionCreateView.as_view(), name='transaction-create'),
+    path('transactions/import/', views.ImportCSVView.as_view(), name='transaction-import'),
     path('transactions/<int:pk>/edit/', views.TransactionUpdateView.as_view(), name='transaction-edit'),
     path('transactions/<int:pk>/delete/', views.TransactionDeleteView.as_view(), name='transaction-delete'),
 ]

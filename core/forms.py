@@ -35,6 +35,14 @@ class CategoryForm(forms.ModelForm):
         }
 
 
+class CSVImportForm(forms.Form):
+    csv_file = forms.FileField(
+        label='CSV-файл',
+        widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': '.csv'}),
+        help_text='Кодировка UTF-8. Столбцы: date, type, amount, category, account, description',
+    )
+
+
 class TransactionForm(forms.ModelForm):
     # Принимаем user, чтобы показывать только счета и категории этого пользователя
     def __init__(self, *args, user=None, **kwargs):

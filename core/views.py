@@ -1,5 +1,8 @@
+import csv
+import io
 import json
-from datetime import date
+from datetime import date, datetime
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth import login
@@ -13,7 +16,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from .forms import AccountForm, CategoryForm, TransactionForm
+from .forms import AccountForm, CategoryForm, CSVImportForm, TransactionForm
 from .models import Account, Category, Transaction
 
 
@@ -371,3 +374,102 @@ class TransactionDeleteView(LoginRequiredMixin, DeleteView):
         _apply_balance(self.object.account, self.object.type, self.object.amount, reverse=True)
         messages.success(self.request, 'Транзакция удалена.')
         return super().form_valid(form)
+
+
+# ---------------------------------------------------------------------------
+# CSV Import
+# ---------------------------------------------------------------------------
+
+def _parse_csv(file_obj, user):
+    """
+    Читает CSV-файл и возвращает список результатов по каждой строке.
+    Формат: date,type,amount,category,account,description
+    """
+    # utf-8-sig автоматически убирает BOM-маркер, который добавляет Excel
+    content = file_obj.read().decode('utf-8-sig')
+    reader = csv.DictReader(io.StringIO(content))
+
+    required_columns = {'date', 'type', 'amount', 'account'}
+    if not required_columns.issubset(set(reader.fieldnames or [])):
+        missing = required_columns - set(reader.fieldnames or [])
+        raise ValueError(f'В файле отсутствуют обязательные столбцы: {", ".join(missing)}')
+
+    results = []
+    for line_num, row in enumerate(reader, start=2):
+        try:
+            # --- Парсим и валидируем поля ---
+            raw_date = row.get('date', '').strip()
+            t_type = row.get('type', '').strip().lower()
+            raw_amount = row.get('amount', '').strip()
+            account_name = row.get('account', '').strip()
+            category_name = row.get('category', '').strip()
+            description = row.get('description', '').strip()
+
+            tx_date = datetime.strptime(raw_date, '%Y-%m-%d').date()
+
+            if t_type not in ('income', 'expense'):
+                raise ValueError('type должен быть income или expense')
+
+            amount = Decimal(raw_amount)
+            if amount <= 0:
+                raise ValueError('amount должен быть положительным числом')
+
+            # Ищем счёт только среди счетов этого пользователя
+            try:
+                account = Account.objects.get(name=account_name, owner=user)
+            except Account.DoesNotExist:
+                raise ValueError(f'Счёт «{account_name}» не найден')
+
+            # Категория необязательна
+            category = None
+            if category_name:
+                category = Category.objects.filter(name=category_name, owner=user).first()
+
+            transaction = Transaction.objects.create(
+                date=tx_date,
+                type=t_type,
+                amount=amount,
+                account=account,
+                category=category,
+                description=description,
+                owner=user,
+            )
+            _apply_balance(account, t_type, amount)
+
+            results.append({'line': line_num, 'ok': True, 'detail': str(transaction)})
+
+        except (ValueError, InvalidOperation) as e:
+            results.append({'line': line_num, 'ok': False, 'detail': str(e)})
+
+    return results
+
+
+class ImportCSVView(LoginRequiredMixin, View):
+    template_name = 'transactions/import.html'
+
+    def get(self, request):
+        return render(request, self.template_name, {'form': CSVImportForm()})
+
+    def post(self, request):
+        form = CSVImportForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return render(request, self.template_name, {'form': form})
+
+        try:
+            results = _parse_csv(request.FILES['csv_file'], request.user)
+        except ValueError as e:
+            form.add_error('csv_file', str(e))
+            return render(request, self.template_name, {'form': form})
+
+        ok_count = sum(1 for r in results if r['ok'])
+        err_count = len(results) - ok_count
+
+        if ok_count:
+            messages.success(request, f'Импортировано транзакций: {ok_count}.')
+        if err_count:
+            messages.warning(request, f'Пропущено строк с ошибками: {err_count}.')
+
+        return render(request, self.template_name, {
+            'form': CSVImportForm(),
+            'results': results,
+        })
