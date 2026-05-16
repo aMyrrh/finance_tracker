@@ -4,155 +4,220 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>Транзакции</h2>
+    <h4 class="fw-bold mb-0">Транзакции</h4>
     <div class="d-flex gap-2">
-        <a href="{% url 'transaction-import' %}" class="btn btn-outline-secondary">
-            <i class="bi bi-upload"></i> Импорт CSV
+        <a href="{% url 'transaction-import' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-file-earmark-arrow-up"></i>
+            <span class="d-none d-sm-inline ms-1">Импорт CSV</span>
         </a>
-        <a href="{% url 'transaction-create' %}" class="btn btn-primary">
-            <i class="bi bi-plus-lg"></i> Новая транзакция
+        <a href="{% url 'transaction-create' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i> Новая транзакция
         </a>
     </div>
 </div>
 
-{# Форма фильтрации #}
-<div class="card shadow-sm mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-2">
-                <label class="form-label small">С даты</label>
-                <input type="date" name="date_from" class="form-control form-control-sm"
-                       value="{{ current_filters.date_from }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">По дату</label>
-                <input type="date" name="date_to" class="form-control form-control-sm"
-                       value="{{ current_filters.date_to }}">
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Тип</label>
-                <select name="type" class="form-select form-select-sm">
-                    <option value="">Все</option>
-                    <option value="income" {% if current_filters.type == 'income' %}selected{% endif %}>Доход</option>
-                    <option value="expense" {% if current_filters.type == 'expense' %}selected{% endif %}>Расход</option>
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Счёт</label>
-                <select name="account" class="form-select form-select-sm">
-                    <option value="">Все</option>
-                    {% for acc in accounts %}
-                        <option value="{{ acc.pk }}" {% if current_filters.account == acc.pk|stringformat:'s' %}selected{% endif %}>
-                            {{ acc.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2">
-                <label class="form-label small">Категория</label>
-                <select name="category" class="form-select form-select-sm">
-                    <option value="">Все</option>
-                    {% for cat in categories %}
-                        <option value="{{ cat.pk }}" {% if current_filters.category == cat.pk|stringformat:'s' %}selected{% endif %}>
-                            {{ cat.name }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <div class="col-md-2 d-flex gap-2">
-                <button type="submit" class="btn btn-secondary btn-sm w-100">Фильтр</button>
-                <a href="{% url 'transaction-list' %}" class="btn btn-outline-secondary btn-sm">✕</a>
-            </div>
-        </form>
-    </div>
-</div>
+{# ── Фильтры ────────────────────────────────────────────────── #}
+{% with active_count=0 %}
+{# Считаем активные фильтры #}
+{% if current_filters.date_from or current_filters.date_to or current_filters.type or current_filters.account or current_filters.category %}
+    {% with has_filters=1 %}
+    {% endwith %}
+{% endif %}
 
-{# Список транзакций #}
-{% if transactions %}
-<div class="table-responsive">
-    <table class="table table-hover align-middle">
-        <thead class="table-light">
-            <tr>
-                <th>Дата</th>
-                <th>Тип</th>
-                <th>Сумма</th>
-                <th>Счёт</th>
-                <th>Категория</th>
-                <th>Описание</th>
-                <th></th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for t in transactions %}
-            <tr>
-                <td>{{ t.date|date:"d.m.Y" }}</td>
-                <td>
-                    {% if t.type == 'income' %}
-                        <span class="badge bg-success">Доход</span>
-                    {% else %}
-                        <span class="badge bg-danger">Расход</span>
-                    {% endif %}
-                </td>
-                <td class="fw-bold {% if t.type == 'income' %}text-success{% else %}text-danger{% endif %}">
-                    {% if t.type == 'income' %}+{% else %}−{% endif %}{{ t.amount }}
-                </td>
-                <td>{{ t.account.name }}</td>
-                <td>
-                    {% if t.category %}
-                        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ t.category.color }};margin-right:4px;"></span>
-                        {{ t.category.name }}
-                    {% else %}
-                        <span class="text-muted">—</span>
-                    {% endif %}
-                </td>
-                <td class="text-muted small">{{ t.description|truncatechars:40 }}</td>
-                <td class="text-end">
-                    <a href="{% url 'transaction-edit' t.pk %}" class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-pencil"></i>
-                    </a>
-                    <a href="{% url 'transaction-delete' t.pk %}" class="btn btn-sm btn-outline-danger">
-                        <i class="bi bi-trash"></i>
-                    </a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-{# Пагинация #}
-{% if page_obj.has_other_pages %}
-<nav>
-    <ul class="pagination justify-content-center">
-        {% if page_obj.has_previous %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.previous_page_number }}&{{ filter_query }}">‹</a>
-        </li>
-        {% endif %}
-
-        {% for num in page_obj.paginator.page_range %}
-            {% if page_obj.number == num %}
-                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                <li class="page-item">
-                    <a class="page-link" href="?page={{ num }}&{{ filter_query }}">{{ num }}</a>
-                </li>
+<div class="card shadow-sm mb-3 border-0">
+    <div class="card-header py-2 px-3" style="cursor:pointer;" data-bs-toggle="collapse" data-bs-target="#filterPanel">
+        <div class="d-flex align-items-center gap-2">
+            <i class="bi bi-funnel text-muted"></i>
+            <span class="fw-semibold small">Фильтры</span>
+            {% if current_filters.date_from or current_filters.date_to or current_filters.type or current_filters.account or current_filters.category %}
+                <span class="badge bg-primary rounded-pill">активны</span>
+                <a href="{% url 'transaction-list' %}" class="btn btn-link btn-sm p-0 ms-1 text-danger" onclick="event.stopPropagation();"
+                   title="Сбросить фильтры">
+                    <i class="bi bi-x-circle"></i>
+                </a>
             {% endif %}
-        {% endfor %}
+            <i class="bi bi-chevron-down ms-auto text-muted small"></i>
+        </div>
+    </div>
+    <div class="collapse {% if current_filters.date_from or current_filters.date_to or current_filters.type or current_filters.account or current_filters.category %}show{% endif %}"
+         id="filterPanel">
+        <div class="card-body pt-3 pb-2">
+            <form method="get" class="row g-2 align-items-end">
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">С даты</label>
+                    <input type="date" name="date_from" class="form-control form-control-sm"
+                           value="{{ current_filters.date_from }}">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">По дату</label>
+                    <input type="date" name="date_to" class="form-control form-control-sm"
+                           value="{{ current_filters.date_to }}">
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Тип</label>
+                    <select name="type" class="form-select form-select-sm">
+                        <option value="">Все типы</option>
+                        <option value="income"  {% if current_filters.type == 'income'  %}selected{% endif %}>Доход</option>
+                        <option value="expense" {% if current_filters.type == 'expense' %}selected{% endif %}>Расход</option>
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Счёт</label>
+                    <select name="account" class="form-select form-select-sm">
+                        <option value="">Все счета</option>
+                        {% for acc in accounts %}
+                            <option value="{{ acc.pk }}" {% if current_filters.account == acc.pk|stringformat:'s' %}selected{% endif %}>
+                                {{ acc.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-2">
+                    <label class="form-label small mb-1">Категория</label>
+                    <select name="category" class="form-select form-select-sm">
+                        <option value="">Все категории</option>
+                        {% for cat in categories %}
+                            <option value="{{ cat.pk }}" {% if current_filters.category == cat.pk|stringformat:'s' %}selected{% endif %}>
+                                {{ cat.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-6 col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">
+                        <i class="bi bi-search"></i> Найти
+                    </button>
+                    <a href="{% url 'transaction-list' %}" class="btn btn-outline-secondary btn-sm px-2" title="Сбросить">
+                        <i class="bi bi-x-lg"></i>
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endwith %}
 
-        {% if page_obj.has_next %}
-        <li class="page-item">
-            <a class="page-link" href="?page={{ page_obj.next_page_number }}&{{ filter_query }}">›</a>
-        </li>
+{# ── Список транзакций ──────────────────────────────────────── #}
+{% if transactions %}
+<div class="card shadow-sm border-0">
+    {% if page_obj %}
+    <div class="card-header d-flex justify-content-between align-items-center py-2 px-3">
+        <span class="small text-muted">
+            Показано {{ page_obj.start_index }}–{{ page_obj.end_index }} из {{ page_obj.paginator.count }}
+        </span>
+        {% if current_filters.date_from or current_filters.date_to or current_filters.type or current_filters.account or current_filters.category %}
+            <span class="badge bg-light text-secondary border small">фильтр активен</span>
         {% endif %}
-    </ul>
+    </div>
+    {% endif %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th style="width:95px;">Дата</th>
+                    <th style="width:80px;">Тип</th>
+                    <th>Категория</th>
+                    <th class="d-none d-md-table-cell">Счёт</th>
+                    <th class="d-none d-lg-table-cell">Описание</th>
+                    <th class="text-end">Сумма</th>
+                    <th style="width:80px;"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in transactions %}
+                <tr>
+                    <td class="text-muted small">{{ t.date|date:"d.m.Y" }}</td>
+                    <td>
+                        {% if t.type == 'income' %}
+                            <span class="badge bg-success bg-opacity-10 text-success fw-semibold">Доход</span>
+                        {% else %}
+                            <span class="badge bg-danger bg-opacity-10 text-danger fw-semibold">Расход</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if t.category %}
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="rounded-circle flex-shrink-0"
+                                      style="width:9px;height:9px;display:inline-block;background:{{ t.category.color }};"></span>
+                                <span class="small">{{ t.category.name }}</span>
+                            </div>
+                        {% else %}
+                            <span class="text-muted small">—</span>
+                        {% endif %}
+                    </td>
+                    <td class="small text-muted d-none d-md-table-cell">{{ t.account.name }}</td>
+                    <td class="text-muted small d-none d-lg-table-cell">{{ t.description|truncatechars:40 }}</td>
+                    <td class="text-end fw-bold {% if t.type == 'income' %}text-success{% else %}text-danger{% endif %}"
+                        data-raw="{{ t.amount }}" style="white-space:nowrap;">
+                        {% if t.type == 'income' %}+{% else %}−{% endif %}{{ t.amount }} ₽
+                    </td>
+                    <td class="text-end">
+                        <a href="{% url 'transaction-edit' t.pk %}"
+                           class="btn btn-sm btn-outline-secondary py-0 px-2" title="Изменить">
+                            <i class="bi bi-pencil"></i>
+                        </a>
+                        <a href="{% url 'transaction-delete' t.pk %}"
+                           class="btn btn-sm btn-outline-danger py-0 px-2 ms-1" title="Удалить">
+                            <i class="bi bi-trash"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{# ── Пагинация ──────────────────────────────────────────────── #}
+{% if page_obj.has_other_pages %}
+<nav class="mt-3">
+    <div class="d-flex justify-content-between align-items-center">
+        <span class="small text-muted">
+            Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}
+        </span>
+        <ul class="pagination pagination-sm mb-0">
+            <li class="page-item {% if not page_obj.has_previous %}disabled{% endif %}">
+                <a class="page-link"
+                   href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}&{{ filter_query }}{% else %}#{% endif %}">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            </li>
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}&{{ filter_query }}">{{ num }}</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            <li class="page-item {% if not page_obj.has_next %}disabled{% endif %}">
+                <a class="page-link"
+                   href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}&{{ filter_query }}{% else %}#{% endif %}">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            </li>
+        </ul>
+    </div>
 </nav>
 {% endif %}
 
 {% else %}
-<div class="text-center text-muted py-5">
-    <i class="bi bi-receipt fs-1"></i>
-    <p class="mt-2">Транзакций не найдено.</p>
+<div class="card shadow-sm border-0">
+    <div class="text-center text-muted py-5">
+        <i class="bi bi-receipt fs-1 opacity-25 d-block mb-3"></i>
+        {% if current_filters.date_from or current_filters.date_to or current_filters.type or current_filters.account or current_filters.category %}
+            <p class="mb-2">По заданным фильтрам транзакций не найдено.</p>
+            <a href="{% url 'transaction-list' %}" class="btn btn-outline-secondary btn-sm">
+                <i class="bi bi-x-circle me-1"></i>Сбросить фильтры
+            </a>
+        {% else %}
+            <p class="mb-2">Транзакций пока нет.</p>
+            <a href="{% url 'transaction-create' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1"></i>Добавить первую
+            </a>
+        {% endif %}
+    </div>
 </div>
 {% endif %}
 {% endblock %}

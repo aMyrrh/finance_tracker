@@ -4,66 +4,110 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Добро пожаловать, {{ user.username }}!</h2>
+    <div>
+        <h4 class="mb-0 fw-bold">Добро пожаловать, {{ user.get_full_name|default:user.username }}!</h4>
+        <span class="text-muted small">{{ current_month }}</span>
+    </div>
     <a href="{% url 'transaction-create' %}" class="btn btn-primary">
-        <i class="bi bi-plus-lg"></i> Добавить транзакцию
+        <i class="bi bi-plus-lg me-1"></i> Добавить транзакцию
     </a>
 </div>
 
-{# Сводные карточки #}
+{# ── Stat cards ─────────────────────────────────────────────── #}
 <div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-body">
-                <div class="text-muted small mb-1"><i class="bi bi-wallet2"></i> Общий баланс</div>
-                <div class="fs-3 fw-bold {% if total_balance >= 0 %}text-success{% else %}text-danger{% endif %}">
-                    {{ total_balance }} ₽
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card stat-card-balance h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#eef2ff;">
+                    <i class="bi bi-wallet2" style="color:#4c6ef5;"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Общий баланс</div>
+                    <div class="fs-5 fw-bold {% if total_balance >= 0 %}text-success{% else %}text-danger{% endif %}"
+                         data-raw="{{ total_balance }}">{{ total_balance }} ₽</div>
                 </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-body">
-                <div class="text-muted small mb-1"><i class="bi bi-arrow-up-circle"></i> Доходы за {{ current_month }}</div>
-                <div class="fs-3 fw-bold text-success">+{{ month_income }} ₽</div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card stat-card-income h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#e6fcf5;">
+                    <i class="bi bi-arrow-up-circle" style="color:#20c997;"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Доходы</div>
+                    <div class="fs-5 fw-bold text-success" data-raw="{{ month_income }}">+{{ month_income }} ₽</div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-body">
-                <div class="text-muted small mb-1"><i class="bi bi-arrow-down-circle"></i> Расходы за {{ current_month }}</div>
-                <div class="fs-3 fw-bold text-danger">−{{ month_expense }} ₽</div>
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card stat-card-expense h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#fff5f5;">
+                    <i class="bi bi-arrow-down-circle" style="color:#f03e3e;"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Расходы</div>
+                    <div class="fs-5 fw-bold text-danger" data-raw="{{ month_expense }}">−{{ month_expense }} ₽</div>
+                </div>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="card shadow-sm h-100 border-0">
-            <div class="card-body">
-                <div class="text-muted small mb-1"><i class="bi bi-graph-up"></i> Итог за месяц</div>
-                <div class="fs-3 fw-bold {% if month_net >= 0 %}text-success{% else %}text-danger{% endif %}">
-                    {% if month_net >= 0 %}+{% endif %}{{ month_net }} ₽
+    <div class="col-6 col-lg-3">
+        <div class="card shadow-sm stat-card stat-card-net h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon" style="background:#f8f0fc;">
+                    <i class="bi bi-graph-up" style="color:#ae3ec9;"></i>
+                </div>
+                <div>
+                    <div class="text-muted small mb-1">Итог за месяц</div>
+                    <div class="fs-5 fw-bold {% if month_net >= 0 %}text-success{% else %}text-danger{% endif %}"
+                         data-raw="{{ month_net }}">
+                        {% if month_net >= 0 %}+{% endif %}{{ month_net }} ₽
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-{# Графики #}
+{# ── Прогресс расходов ──────────────────────────────────────── #}
+{% if month_income > 0 %}
+<div class="card shadow-sm mb-4 border-0">
+    <div class="card-body py-2 px-3">
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="small text-muted">Расходы от доходов за {{ current_month }}</span>
+            <span class="small fw-semibold">
+                {% widthratio month_expense month_income 100 %}%
+            </span>
+        </div>
+        <div class="progress" style="height:6px;">
+            {% widthratio month_expense month_income 100 as pct %}
+            <div class="progress-bar {% if pct > 90 %}bg-danger{% elif pct > 70 %}bg-warning{% else %}bg-success{% endif %}"
+                 style="width:{% widthratio month_expense month_income 100 %}%"></div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{# ── Графики ────────────────────────────────────────────────── #}
 <div class="row g-4 mb-4">
     <div class="col-lg-5">
         <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-white">
-                <strong>Расходы по категориям — {{ current_month }}</strong>
+            <div class="card-header d-flex align-items-center gap-2 py-3">
+                <i class="bi bi-pie-chart text-muted"></i>
+                <strong>Расходы по категориям</strong>
+                <span class="text-muted small ms-auto">{{ current_month }}</span>
             </div>
             <div class="card-body d-flex align-items-center justify-content-center">
                 {% if pie_values != '[]' %}
-                    <canvas id="pieChart" style="max-height:280px;"></canvas>
+                    <canvas id="pieChart" style="max-height:260px;"></canvas>
                 {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="bi bi-pie-chart fs-2"></i>
-                        <p class="mt-2">Нет расходов по категориям за этот месяц</p>
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-pie-chart fs-1 opacity-25"></i>
+                        <p class="mt-2 mb-0 small">Нет расходов по категориям</p>
                     </div>
                 {% endif %}
             </div>
@@ -71,16 +115,18 @@
     </div>
     <div class="col-lg-7">
         <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-white">
-                <strong>Доходы и расходы за последние 6 месяцев</strong>
+            <div class="card-header d-flex align-items-center gap-2 py-3">
+                <i class="bi bi-bar-chart text-muted"></i>
+                <strong>Доходы и расходы</strong>
+                <span class="text-muted small ms-auto">6 месяцев</span>
             </div>
             <div class="card-body">
                 {% if bar_labels != '[]' %}
-                    <canvas id="barChart" style="max-height:280px;"></canvas>
+                    <canvas id="barChart" style="max-height:260px;"></canvas>
                 {% else %}
-                    <div class="text-center text-muted py-4">
-                        <i class="bi bi-bar-chart fs-2"></i>
-                        <p class="mt-2">Недостаточно данных для графика</p>
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-bar-chart fs-1 opacity-25"></i>
+                        <p class="mt-2 mb-0 small">Недостаточно данных</p>
                     </div>
                 {% endif %}
             </div>
@@ -88,42 +134,52 @@
     </div>
 </div>
 
-{# Последние транзакции и счета #}
+{# ── Последние транзакции + Счета ───────────────────────────── #}
 <div class="row g-4">
     <div class="col-lg-8">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <strong>Последние транзакции</strong>
-                <a href="{% url 'transaction-list' %}" class="btn btn-sm btn-outline-secondary">Все</a>
+            <div class="card-header d-flex justify-content-between align-items-center py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-clock-history text-muted"></i>
+                    <strong>Последние транзакции</strong>
+                </div>
+                <a href="{% url 'transaction-list' %}" class="btn btn-sm btn-outline-secondary">
+                    Все <i class="bi bi-arrow-right ms-1"></i>
+                </a>
             </div>
             {% if last_transactions %}
             <div class="list-group list-group-flush">
                 {% for t in last_transactions %}
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <div>
-                        <div class="fw-semibold">
-                            {% if t.category %}
-                                <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:{{ t.category.color }};margin-right:6px;"></span>
-                                {{ t.category.name }}
-                            {% else %}
-                                <span class="text-muted">Без категории</span>
-                            {% endif %}
+                <a href="{% url 'transaction-edit' t.pk %}"
+                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-2 px-3">
+                    <div class="d-flex align-items-center gap-2 overflow-hidden">
+                        <div class="rounded-circle flex-shrink-0"
+                             style="width:8px;height:8px;background:{% if t.category %}{{ t.category.color }}{% elif t.type == 'income' %}#20c997{% else %}#f03e3e{% endif %};"></div>
+                        <div class="overflow-hidden">
+                            <div class="fw-semibold small text-truncate">
+                                {% if t.category %}{{ t.category.name }}{% else %}<span class="text-muted">Без категории</span>{% endif %}
+                            </div>
+                            <div class="text-muted" style="font-size:.75rem;">
+                                {{ t.date|date:"d.m.Y" }} · {{ t.account.name }}
+                                {% if t.description %} · {{ t.description|truncatechars:35 }}{% endif %}
+                            </div>
                         </div>
-                        <div class="text-muted small">{{ t.date|date:"d.m.Y" }} · {{ t.account.name }}</div>
-                        {% if t.description %}
-                            <div class="text-muted small">{{ t.description|truncatechars:60 }}</div>
-                        {% endif %}
                     </div>
-                    <span class="fw-bold {% if t.type == 'income' %}text-success{% else %}text-danger{% endif %}">
+                    <span class="fw-bold ms-2 flex-shrink-0 {% if t.type == 'income' %}text-success{% else %}text-danger{% endif %}"
+                          data-raw="{{ t.amount }}"
+                          style="font-size:.9rem;">
                         {% if t.type == 'income' %}+{% else %}−{% endif %}{{ t.amount }} ₽
                     </span>
-                </div>
+                </a>
                 {% endfor %}
             </div>
             {% else %}
-            <div class="card-body text-center text-muted py-4">
-                <i class="bi bi-receipt fs-2"></i>
-                <p class="mt-2">Транзакций пока нет. <a href="{% url 'transaction-create' %}">Добавить первую</a></p>
+            <div class="card-body text-center text-muted py-5">
+                <i class="bi bi-receipt fs-1 opacity-25"></i>
+                <p class="mt-2 mb-1">Транзакций пока нет</p>
+                <a href="{% url 'transaction-create' %}" class="btn btn-sm btn-primary mt-1">
+                    <i class="bi bi-plus-lg me-1"></i>Добавить первую
+                </a>
             </div>
             {% endif %}
         </div>
@@ -131,25 +187,41 @@
 
     <div class="col-lg-4">
         <div class="card shadow-sm border-0">
-            <div class="card-header bg-white d-flex justify-content-between align-items-center">
-                <strong>Счета</strong>
-                <a href="{% url 'account-list' %}" class="btn btn-sm btn-outline-secondary">Все</a>
+            <div class="card-header d-flex justify-content-between align-items-center py-3">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-bank text-muted"></i>
+                    <strong>Счета</strong>
+                </div>
+                <a href="{% url 'account-list' %}" class="btn btn-sm btn-outline-secondary">
+                    Все <i class="bi bi-arrow-right ms-1"></i>
+                </a>
             </div>
             {% if accounts %}
             <div class="list-group list-group-flush">
                 {% for acc in accounts %}
-                <div class="list-group-item d-flex justify-content-between align-items-center">
-                    <span>{{ acc.name }}</span>
-                    <span class="fw-bold {% if acc.balance >= 0 %}text-success{% else %}text-danger{% endif %}">
+                <a href="{% url 'account-edit' acc.pk %}"
+                   class="list-group-item list-group-item-action d-flex justify-content-between align-items-center px-3 py-2">
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="rounded d-flex align-items-center justify-content-center"
+                             style="width:32px;height:32px;font-size:.8rem;
+                                    background:{% if acc.currency == 'RUB' %}#eef2ff{% elif acc.currency == 'USD' %}#e6fcf5{% else %}#fff9db{% endif %};
+                                    color:{% if acc.currency == 'RUB' %}#4c6ef5{% elif acc.currency == 'USD' %}#20c997{% else %}#f59f00{% endif %};">
+                            {% if acc.currency == 'RUB' %}₽{% elif acc.currency == 'USD' %}${% else %}€{% endif %}
+                        </div>
+                        <span class="small fw-semibold">{{ acc.name }}</span>
+                    </div>
+                    <span class="small fw-bold {% if acc.balance >= 0 %}text-success{% else %}text-danger{% endif %}"
+                          data-raw="{{ acc.balance }}">
                         {{ acc.balance }} {{ acc.currency }}
                     </span>
-                </div>
+                </a>
                 {% endfor %}
             </div>
             {% else %}
             <div class="card-body text-center text-muted py-4">
-                <i class="bi bi-bank fs-2"></i>
-                <p class="mt-2"><a href="{% url 'account-create' %}">Добавить счёт</a></p>
+                <i class="bi bi-bank fs-2 opacity-25"></i>
+                <p class="mt-2 mb-1 small">Счетов пока нет</p>
+                <a href="{% url 'account-create' %}" class="btn btn-sm btn-primary mt-1">Добавить счёт</a>
             </div>
             {% endif %}
         </div>
@@ -160,7 +232,6 @@
 {% block extra_js %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <script>
-    // Данные пришли из Django как JSON-строки, парсим их в JS-объекты
     const pieLabels  = {{ pie_labels|safe }};
     const pieValues  = {{ pie_values|safe }};
     const pieColors  = {{ pie_colors|safe }};
@@ -168,26 +239,26 @@
     const barIncome  = {{ bar_income|safe }};
     const barExpense = {{ bar_expense|safe }};
 
+    const fmtRub = v => v.toLocaleString('ru-RU', {maximumFractionDigits: 0}) + ' ₽';
+
     if (document.getElementById('pieChart')) {
         new Chart(document.getElementById('pieChart'), {
-            type: 'pie',
+            type: 'doughnut',
             data: {
                 labels: pieLabels,
                 datasets: [{
                     data: pieValues,
                     backgroundColor: pieColors,
-                    borderWidth: 2,
+                    borderWidth: 3,
                     borderColor: '#fff',
+                    hoverOffset: 6,
                 }]
             },
             options: {
+                cutout: '55%',
                 plugins: {
-                    legend: { position: 'right' },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => ` ${ctx.label}: ${ctx.parsed.toLocaleString('ru-RU')} ₽`
-                        }
-                    }
+                    legend: { position: 'right', labels: { boxWidth: 12, padding: 12, font: {size: 12} } },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${fmtRub(ctx.parsed)}` } }
                 }
             }
         });
@@ -202,36 +273,34 @@
                     {
                         label: 'Доходы',
                         data: barIncome,
-                        backgroundColor: 'rgba(25, 135, 84, 0.7)',
-                        borderColor: 'rgba(25, 135, 84, 1)',
+                        backgroundColor: 'rgba(32,201,151,.75)',
+                        borderColor: 'rgba(32,201,151,1)',
                         borderWidth: 1,
+                        borderRadius: 4,
                     },
                     {
                         label: 'Расходы',
                         data: barExpense,
-                        backgroundColor: 'rgba(220, 53, 69, 0.7)',
-                        borderColor: 'rgba(220, 53, 69, 1)',
+                        backgroundColor: 'rgba(240,62,62,.65)',
+                        borderColor: 'rgba(240,62,62,1)',
                         borderWidth: 1,
+                        borderRadius: 4,
                     }
                 ]
             },
             options: {
                 responsive: true,
                 plugins: {
-                    legend: { position: 'top' },
-                    tooltip: {
-                        callbacks: {
-                            label: ctx => ` ${ctx.dataset.label}: ${ctx.parsed.y.toLocaleString('ru-RU')} ₽`
-                        }
-                    }
+                    legend: { position: 'top', labels: { boxWidth: 12, padding: 12, font: {size: 12} } },
+                    tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${fmtRub(ctx.parsed.y)}` } }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        ticks: {
-                            callback: val => val.toLocaleString('ru-RU') + ' ₽'
-                        }
-                    }
+                        grid: { color: 'rgba(0,0,0,.05)' },
+                        ticks: { callback: v => v.toLocaleString('ru-RU') + ' ₽', font: {size: 11} }
+                    },
+                    x: { grid: { display: false } }
                 }
             }
         });

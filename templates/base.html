@@ -7,101 +7,281 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <style>
-        body { min-height: 100vh; display: flex; flex-direction: column; }
-        .navbar-brand { font-size: 1.1rem; letter-spacing: .02em; }
+        :root {
+            --sidebar-width: 230px;
+            --sidebar-bg: #1a1f36;
+            --navbar-h: 56px;
+        }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: #f0f2f5;
+        }
+
+        /* ── Navbar ─────────────────────────────── */
+        .app-navbar {
+            height: var(--navbar-h);
+            background: #fff;
+            border-bottom: 1px solid #e9ecef;
+            box-shadow: 0 1px 4px rgba(0,0,0,.06);
+            position: sticky;
+            top: 0;
+            z-index: 1030;
+        }
+        .app-navbar .brand-logo {
+            width: 30px; height: 30px;
+            border-radius: .4rem;
+            background: #4c6ef5;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-size: .95rem;
+            flex-shrink: 0;
+        }
+        .app-navbar .brand-text {
+            font-weight: 700; font-size: 1rem; color: #1a1f36;
+        }
+
+        /* ── Sidebar (sticky — всегда в пределах экрана) ─────── */
         #sidebar {
-            min-width: 220px; max-width: 220px;
-            background: #1a1f36;
-            min-height: calc(100vh - 56px);
+            width: var(--sidebar-width);
+            min-width: var(--sidebar-width);
+            background: var(--sidebar-bg);
+            height: calc(100vh - var(--navbar-h));
+            position: sticky;
+            top: var(--navbar-h);
+            display: flex;
+            flex-direction: column;
+            padding: .5rem;
+            overflow-y: auto;
+            flex-shrink: 0;
         }
         #sidebar .nav-link {
-            color: rgba(255,255,255,.65);
-            border-radius: .375rem;
-            padding: .45rem .75rem;
-            font-size: .92rem;
+            color: rgba(255,255,255,.6);
+            border-radius: .5rem;
+            padding: .48rem .75rem;
+            font-size: .875rem;
+            font-weight: 500;
+            transition: background .15s, color .15s;
+            display: flex;
+            align-items: center;
+            gap: .55rem;
         }
-        #sidebar .nav-link:hover,
-        #sidebar .nav-link.active {
-            color: #fff;
-            background: rgba(255,255,255,.1);
+        #sidebar .nav-link i { font-size: .95rem; width: 1rem; text-align: center; flex-shrink: 0; }
+        #sidebar .nav-link:hover { color: rgba(255,255,255,.9); background: rgba(255,255,255,.07); }
+        #sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.13); }
+        #sidebar .sidebar-section {
+            font-size: .67rem; font-weight: 700;
+            letter-spacing: .1em; text-transform: uppercase;
+            color: rgba(255,255,255,.28);
+            padding: 1rem .75rem .3rem;
         }
-        #sidebar .nav-link i { width: 1.2rem; text-align: center; margin-right: .4rem; }
-        #sidebar .sidebar-heading {
-            font-size: .7rem; letter-spacing: .1em;
-            text-transform: uppercase; color: rgba(255,255,255,.35);
-            padding: 1rem .75rem .25rem;
+        .sidebar-user {
+            margin-top: auto;
+            padding-top: .75rem;
+            border-top: 1px solid rgba(255,255,255,.1);
+            flex-shrink: 0;
         }
-        .content-area { flex: 1; padding: 1.5rem; background: #f8f9fa; }
-        .table th { font-size: .8rem; text-transform: uppercase;
-                    letter-spacing: .05em; color: #6c757d; }
-        footer { font-size: .8rem; color: #adb5bd; }
+        .user-chip {
+            display: flex; align-items: center; gap: .6rem;
+            padding: .5rem .6rem;
+            border-radius: .5rem;
+            background: rgba(255,255,255,.07);
+            text-decoration: none;
+            transition: background .15s;
+        }
+        .user-chip:hover { background: rgba(255,255,255,.13); }
+        .user-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #fff; font-weight: 700; font-size: .8rem;
+            flex-shrink: 0;
+        }
+
+        /* ── Content ─────────────────────────────── */
+        .content-area { flex: 1; padding: 1.75rem; min-width: 0; overflow: auto; }
+
+        /* ── Cards ───────────────────────────────── */
+        .card { border: none; border-radius: .75rem; }
+        .card-header {
+            background: #fff; border-bottom: 1px solid #f0f0f0;
+            font-weight: 600; border-radius: .75rem .75rem 0 0 !important;
+        }
+
+        /* ── Stat cards ──────────────────────────── */
+        .stat-card { border-left: 4px solid transparent !important; }
+        .stat-card-balance { border-left-color: #4c6ef5 !important; }
+        .stat-card-income  { border-left-color: #20c997 !important; }
+        .stat-card-expense { border-left-color: #f03e3e !important; }
+        .stat-card-net     { border-left-color: #ae3ec9 !important; }
+        .stat-icon {
+            width: 42px; height: 42px; border-radius: .6rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.15rem; flex-shrink: 0;
+        }
+
+        /* ── Table ───────────────────────────────── */
+        .table th {
+            font-size: .75rem; text-transform: uppercase;
+            letter-spacing: .06em; color: #9ca3af; font-weight: 600;
+        }
+        .table tbody tr:hover { background: #f8fafc; }
+
+        /* ── Alerts ──────────────────────────────── */
+        .alert { border-radius: .6rem; }
+
+        /* ── Pagination ──────────────────────────── */
+        .page-link { border-radius: .4rem !important; margin: 0 2px; }
+
+        /* ── Mobile offcanvas sidebar ────────────── */
+        .offcanvas-sidebar { background: var(--sidebar-bg); }
+        .offcanvas-sidebar .nav-link {
+            color: rgba(255,255,255,.6);
+            border-radius: .5rem; padding: .5rem .75rem;
+            font-size: .9rem; font-weight: 500;
+            display: flex; align-items: center; gap: .55rem;
+            transition: background .15s, color .15s;
+        }
+        .offcanvas-sidebar .nav-link i { width: 1rem; text-align: center; }
+        .offcanvas-sidebar .nav-link:hover { color: rgba(255,255,255,.9); background: rgba(255,255,255,.07); }
+        .offcanvas-sidebar .nav-link.active { color: #fff; background: rgba(255,255,255,.13); }
+        .offcanvas-sidebar .sidebar-section {
+            font-size: .67rem; font-weight: 700;
+            letter-spacing: .1em; text-transform: uppercase;
+            color: rgba(255,255,255,.28);
+            padding: 1rem .75rem .3rem;
+        }
+
+        footer { font-size: .78rem; }
     </style>
 </head>
-<body class="bg-light">
+<body>
 
 {% if user.is_authenticated %}
 {% with url_name=request.resolver_match.url_name %}
-<nav class="navbar navbar-dark bg-primary px-3" style="height:56px;">
-    <a class="navbar-brand fw-bold" href="{% url 'dashboard' %}">
-        <i class="bi bi-wallet2 me-1"></i>Мои финансы
+
+{# ── Mobile offcanvas sidebar ─────────────────────────────── #}
+<div class="offcanvas offcanvas-start offcanvas-sidebar d-md-none"
+     tabindex="-1" id="mobileSidebar" style="width:var(--sidebar-width);">
+    <div class="offcanvas-header pb-1">
+        <div class="d-flex align-items-center gap-2">
+            <div class="brand-logo"><i class="bi bi-wallet2"></i></div>
+            <span class="fw-bold text-white">Мои финансы</span>
+        </div>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-2">
+        <div class="sidebar-section">Обзор</div>
+        <a href="{% url 'dashboard' %}" class="nav-link {% if url_name == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-grid-1x2"></i> Дашборд
+        </a>
+        <div class="sidebar-section">Учёт</div>
+        <a href="{% url 'transaction-list' %}" class="nav-link {% if url_name == 'transaction-list' or url_name == 'transaction-edit' or url_name == 'transaction-delete' %}active{% endif %}">
+            <i class="bi bi-receipt"></i> Транзакции
+        </a>
+        <a href="{% url 'transaction-create' %}" class="nav-link {% if url_name == 'transaction-create' %}active{% endif %}">
+            <i class="bi bi-plus-circle"></i> Добавить
+        </a>
+        <a href="{% url 'transaction-import' %}" class="nav-link {% if url_name == 'transaction-import' %}active{% endif %}">
+            <i class="bi bi-file-earmark-arrow-up"></i> Импорт CSV
+        </a>
+        <div class="sidebar-section">Справочники</div>
+        <a href="{% url 'account-list' %}" class="nav-link {% if 'account' in url_name %}active{% endif %}">
+            <i class="bi bi-bank"></i> Счета
+        </a>
+        <a href="{% url 'category-list' %}" class="nav-link {% if 'category' in url_name %}active{% endif %}">
+            <i class="bi bi-tags"></i> Категории
+        </a>
+        <div class="sidebar-section">Аккаунт</div>
+        <a href="{% url 'profile' %}" class="nav-link {% if url_name == 'profile' %}active{% endif %}">
+            <i class="bi bi-person-circle"></i> Профиль
+        </a>
+    </div>
+</div>
+
+{# ── Top navbar ───────────────────────────────────────────── #}
+<nav class="app-navbar px-3 d-flex align-items-center gap-2">
+    <button class="btn btn-sm btn-light d-md-none" data-bs-toggle="offcanvas" data-bs-target="#mobileSidebar">
+        <i class="bi bi-list fs-5"></i>
+    </button>
+    <a href="{% url 'dashboard' %}" class="d-flex align-items-center gap-2 text-decoration-none">
+        <div class="brand-logo"><i class="bi bi-wallet2"></i></div>
+        <span class="brand-text d-none d-sm-inline">Мои финансы</span>
     </a>
-    <div class="d-flex align-items-center gap-3 ms-auto">
-        <span class="text-white-50 small d-none d-md-inline">
-            <i class="bi bi-person-circle me-1"></i>{{ user.username }}
-        </span>
+    <div class="ms-auto d-flex align-items-center gap-2">
         <form method="post" action="{% url 'logout' %}" class="m-0">
             {% csrf_token %}
-            <button type="submit" class="btn btn-sm btn-outline-light">
-                <i class="bi bi-box-arrow-right"></i> Выйти
+            <button type="submit" class="btn btn-sm btn-outline-secondary">
+                <i class="bi bi-box-arrow-right"></i>
+                <span class="d-none d-sm-inline ms-1">Выйти</span>
             </button>
         </form>
     </div>
 </nav>
-<div class="d-flex" style="flex:1;">
-    <nav id="sidebar" class="d-none d-md-flex flex-column p-2">
-        <div class="sidebar-heading">Обзор</div>
-        <a href="{% url 'dashboard' %}"
-           class="nav-link {% if url_name == 'dashboard' %}active{% endif %}">
-            <i class="bi bi-grid"></i> Дашборд
+
+{# ── Main layout ──────────────────────────────────────────── #}
+<div class="d-flex" style="flex:1; min-height:0;">
+
+    {# Desktop sidebar — sticky, всегда виден #}
+    <nav id="sidebar" class="d-none d-md-flex flex-column">
+        <div class="sidebar-section">Обзор</div>
+        <a href="{% url 'dashboard' %}" class="nav-link {% if url_name == 'dashboard' %}active{% endif %}">
+            <i class="bi bi-grid-1x2"></i> Дашборд
         </a>
 
-        <div class="sidebar-heading">Учёт</div>
-        <a href="{% url 'transaction-list' %}"
-           class="nav-link {% if url_name == 'transaction-list' or url_name == 'transaction-edit' or url_name == 'transaction-delete' %}active{% endif %}">
+        <div class="sidebar-section">Учёт</div>
+        <a href="{% url 'transaction-list' %}" class="nav-link {% if url_name == 'transaction-list' or url_name == 'transaction-edit' or url_name == 'transaction-delete' %}active{% endif %}">
             <i class="bi bi-receipt"></i> Транзакции
         </a>
-        <a href="{% url 'transaction-create' %}"
-           class="nav-link {% if url_name == 'transaction-create' %}active{% endif %}">
+        <a href="{% url 'transaction-create' %}" class="nav-link {% if url_name == 'transaction-create' %}active{% endif %}">
             <i class="bi bi-plus-circle"></i> Добавить
         </a>
-        <a href="{% url 'transaction-import' %}"
-           class="nav-link {% if url_name == 'transaction-import' %}active{% endif %}">
-            <i class="bi bi-upload"></i> Импорт CSV
+        <a href="{% url 'transaction-import' %}" class="nav-link {% if url_name == 'transaction-import' %}active{% endif %}">
+            <i class="bi bi-file-earmark-arrow-up"></i> Импорт CSV
         </a>
 
-        <div class="sidebar-heading">Справочники</div>
-        <a href="{% url 'account-list' %}"
-           class="nav-link {% if 'account' in url_name %}active{% endif %}">
+        <div class="sidebar-section">Справочники</div>
+        <a href="{% url 'account-list' %}" class="nav-link {% if 'account' in url_name %}active{% endif %}">
             <i class="bi bi-bank"></i> Счета
         </a>
-        <a href="{% url 'category-list' %}"
-           class="nav-link {% if 'category' in url_name %}active{% endif %}">
+        <a href="{% url 'category-list' %}" class="nav-link {% if 'category' in url_name %}active{% endif %}">
             <i class="bi bi-tags"></i> Категории
         </a>
+
+        {# Аватар пользователя — всегда внизу сайдбара #}
+        <div class="sidebar-user">
+            <a href="{% url 'profile' %}" class="user-chip">
+                <div class="user-avatar js-avatar">{{ user.username|first|upper }}</div>
+                <div style="min-width:0;">
+                    <div class="text-white fw-semibold small text-truncate">
+                        {{ user.get_full_name|default:user.username }}
+                    </div>
+                    <div class="small text-truncate" style="color:rgba(255,255,255,.45);">
+                        Редактировать профиль
+                    </div>
+                </div>
+            </a>
+        </div>
     </nav>
-    <div class="content-area w-100">
+
+    <div class="content-area">
 {% endwith %}
 {% endif %}
 
+{# ── Flash messages ───────────────────────────────────────── #}
 {% if messages %}
-    <div class="mb-3">
+<div id="flash-zone" class="mb-3">
     {% for message in messages %}
-        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    {% endfor %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show d-flex align-items-center gap-2" role="alert">
+        {% if message.tags == 'success' %}<i class="bi bi-check-circle-fill flex-shrink-0"></i>
+        {% elif message.tags == 'error' or message.tags == 'danger' %}<i class="bi bi-x-circle-fill flex-shrink-0"></i>
+        {% elif message.tags == 'warning' %}<i class="bi bi-exclamation-triangle-fill flex-shrink-0"></i>
+        {% else %}<i class="bi bi-info-circle-fill flex-shrink-0"></i>{% endif %}
+        <span>{{ message }}</span>
+        <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
     </div>
+    {% endfor %}
+</div>
 {% endif %}
 
 {% block content %}{% endblock %}
@@ -111,11 +291,44 @@
 </div>
 {% endif %}
 
-<footer class="text-center py-3 border-top mt-auto">
+<footer class="text-center py-3 border-top mt-auto bg-white">
     <span class="text-muted">Мои финансы &copy; {% now "Y" %} — курсовая работа</span>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // ── Цвет аватара ─────────────────────────────────────────
+    const AVATAR_PALETTE = [
+        '#4c6ef5','#20c997','#f03e3e','#ae3ec9',
+        '#f59f00','#1c7ed6','#e67700','#2f9e44'
+    ];
+    function defaultAvatarColor(name) {
+        let h = 0;
+        for (let c of name) h = (h * 31 + c.charCodeAt(0)) & 0xFFFFFF;
+        return AVATAR_PALETTE[Math.abs(h) % AVATAR_PALETTE.length];
+    }
+    {% if user.is_authenticated %}
+    const _username = '{{ user.username|escapejs }}';
+    const _avatarColor = localStorage.getItem('avatar_color_' + _username)
+                         || defaultAvatarColor(_username);
+    document.querySelectorAll('.js-avatar').forEach(el => el.style.background = _avatarColor);
+    {% endif %}
+
+    // ── Форматирование сумм ───────────────────────────────────
+    document.querySelectorAll('[data-raw]').forEach(el => {
+        const n = parseFloat(el.dataset.raw);
+        if (!isNaN(n)) {
+            el.textContent = n.toLocaleString('ru-RU', {maximumFractionDigits: 2});
+        }
+    });
+
+    // ── Авто-закрытие уведомлений ────────────────────────────
+    setTimeout(() => {
+        document.querySelectorAll('#flash-zone .alert').forEach(el => {
+            bootstrap.Alert.getOrCreateInstance(el).close();
+        });
+    }, 4000);
+</script>
 {% block extra_js %}{% endblock %}
 </body>
 </html>

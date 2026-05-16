@@ -1,4 +1,5 @@
 from django import forms
+from django.contrib.auth.models import User
 from .models import Account, Category, Transaction
 
 
@@ -41,6 +42,22 @@ class CSVImportForm(forms.Form):
         widget=forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': '.csv'}),
         help_text='Кодировка UTF-8. Столбцы: date, type, amount, category, account, description',
     )
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = User
+        fields = ['username', 'first_name', 'last_name']
+        widgets = {
+            'username':   forms.TextInput(attrs={'class': 'form-control'}),
+            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
+            'last_name':  forms.TextInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'username':   'Имя пользователя (логин)',
+            'first_name': 'Имя',
+            'last_name':  'Фамилия',
+        }
 
 
 class TransactionForm(forms.ModelForm):

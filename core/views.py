@@ -16,7 +16,7 @@ from django.utils import timezone
 from django.views import View
 from django.views.generic import CreateView, DeleteView, ListView, UpdateView
 
-from .forms import AccountForm, CategoryForm, CSVImportForm, TransactionForm
+from .forms import AccountForm, CategoryForm, CSVImportForm, ProfileForm, TransactionForm
 from .models import Account, Category, Transaction
 
 
@@ -37,6 +37,32 @@ class RegisterView(View):
             login(request, user)
             return redirect('dashboard')
         return render(request, 'auth/register.html', {'form': form})
+
+
+# ---------------------------------------------------------------------------
+# Profile
+# ---------------------------------------------------------------------------
+
+AVATAR_COLORS = [
+    '#4c6ef5', '#20c997', '#f03e3e', '#ae3ec9',
+    '#f59f00', '#1c7ed6', '#e67700', '#2f9e44',
+]
+
+
+class ProfileView(LoginRequiredMixin, View):
+    def _ctx(self, form):
+        return {'form': form, 'avatar_colors': AVATAR_COLORS}
+
+    def get(self, request):
+        return render(request, 'profile.html', self._ctx(ProfileForm(instance=request.user)))
+
+    def post(self, request):
+        form = ProfileForm(request.POST, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Профиль обновлён.')
+            return redirect('profile')
+        return render(request, 'profile.html', self._ctx(form))
 
 
 # ---------------------------------------------------------------------------

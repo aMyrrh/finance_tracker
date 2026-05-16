@@ -11,8 +11,18 @@ urlpatterns = [
     path('auth/login/', auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
     path('auth/logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('auth/register/', views.RegisterView.as_view(), name='register'),
+    path('auth/password-change/', auth_views.PasswordChangeView.as_view(
+        template_name='auth/password_change.html',
+        success_url='/auth/password-change/done/',
+    ), name='password_change'),
+    path('auth/password-change/done/', auth_views.PasswordChangeDoneView.as_view(
+        template_name='auth/password_change_done.html',
+    ), name='password_change_done'),
 
-    # Dashboard (заглушка)
+    # Profile
+    path('profile/', views.ProfileView.as_view(), name='profile'),
+
+    # Dashboard
     path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
 
     # Accounts
